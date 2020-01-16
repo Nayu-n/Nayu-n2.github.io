@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>センサからの信号受信</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.min.js"></script>
+     <style>
+        h1{
+         text-align: center;
+         color: darkslateblue;
+        }
+         h2{
+         text-align: center;
+         color: darkslateblue;
+        }
+        h3{
+         text-align: center;
+         color: cornflowerblue;
+        }
+       .btn-square {
+          margin: 10px 270px;
+          display: inline-block;
+          padding: 0.5em 1em;
+          text-decoration: none;
+          background: #668ad8;/*ボタン色*/
+          color: #FFF;
+          border-bottom: solid 4px #627295;
+          border-radius: 3px;
+        }
+        .btn-square:active {/*ボタンを押したとき*/
+          -webkit-transform: translateY(4px);
+          transform: translateY(4px);/*下に動く*/
+          border-bottom: none;/*線を消す*/
+        }
+    </style>
+  </head>
+
+  <body>
+  <h1>スマホからのセンサーで遊ぼう！</h1>
+  <div>
+    <div>あなたのID: <span id="myid"></span></div>
+    <div>ルームID: <span id="room"></span></div>
+<!--    <div>受信した情報はコンソールログで確認してください</div>-->
+    <h3>～❄雪の結晶❄をたくさん集めよう～</h3>
+    <h3 id="txt">Scoreを表示</h3>
+    <h2 id="txt2"></h2>
+    <a id="s_btn" href="#" class="btn-square">START</a>
+  </div>
+  <script>
+    let room = "s1317258";
+    let socket = io.connect('https://qa.fujimura.com');//ソケットを接続
+    let myid;
+    let speedX = 0;//雪だるまの速さ
+    let speedY = 0;
+    
+    document.querySelector("#room").innerHTML = room;
+    socket.on('mylogin', function(data) {//データ届いたよ
+      myid = data;
+      socket.emit('join', room); // 受信room IDを指定
+      document.querySelector("#myid").innerHTML = myid;
+      console.log("あなたのID: ", myid);
+    });
+    socket.on('sensor', function(data) {
+      //console.log("横:"+data.g+"  "+"縦:"+data.b);//a:回転b:縦g:横
+      speedX = 0.05*parseInt(data.g);
+      speedY = 0.05*parseInt(data.b);
+    });
+    
+      
+      // 発話機能をインスタンス化
+  let msg = new SpeechSynthesisUtterance();
+  let voices = window.speechSynthesis.getVoices();
+
+  function speak(text) {
+    // 以下オプション設定
+    msg.voice = voices[7]; // 7:Google 日本人 ja-JP ※他は英語のみ
+    msg.volume = 1.0; // 音量 min 0 ~ max 1
+    msg.rate = 1.0; // 速度 min 0 ~ max 10
+    msg.pitch = 1.0; // 音程 min 0 ~ max 2
+    msg.text = text; // 喋る内容
+    msg.lang = 'ja-JP'; // en-US or ja-JP
+    // msg.lang = 'en-US'; // en-US or ja-JP
+
+    // 発話実行
+    speechSynthesis.speak(msg);
+  }
+  
+  
+    let x = 0;//雪だるまの座標
+    let y = 0;
+    let xs = 70;//雪だるまの大きさ
+    let ys = 50;
+    let score = 0;//スコア
+    let m1 = 50;//的の大きさ
+    let m2 = 50;
+    let m3 = 50;
+    let m4 = 50;
+    let m5 = 50;
+    let targetX1 = -50;//ターゲットの位置
+    let targetY1 = -50;
+    let targetX2 = -50;
+    let targetY2 = -50;
+    let targetX3 = -50;
+    let targetY3 = -50;
+    let targetX4 = -50;
+    let targetY4 = -50;
+    let targetX5 = -50;
+    let targetY5 = -50;
+    let stop = 0;
+    
+    function preload(){//画像読み込み
+      snowman = loadImage("img/snowman_yukidaruma_sandan.png");//キャラ(プレイヤー)
+      snow1 = loadImage("img/snow_crystal1.png");
+      snow2 = loadImage("img/snow_crystal2.png");
+      snow3 = loadImage("img/snow_crystal4.png");
+      snow4 = loadImage("img/snow_crystal5.png");
+      snow5 = loadImage("img/snow_crystal6.png");
+    }
+    function setup() {//最初の一回のみ実行
+      createCanvas(640,480);//processingでいう[size]
+      background(200,200,255);
+      x = width/2;
+      y = height/2;
+    }
+    
+    function draw() {//一秒間に60回実行
+      background(200,230,255);
+      x = x + speedX;
+      y = y + speedY;
+      if (x>width-50) x=width-50;
+      if (x<0) x=0;
+      if (y>height-50) y=height-50;
+      if (y<0) y=0;
+      let distance1 = Math.sqrt(Math.pow(x-targetX1,2)+Math.pow(y-targetY1,2));//Math.powは累乗　三平方の定理を使ってキャラとの距離を求めた値
+      let distance2 = Math.sqrt(Math.pow(x-targetX2,2)+Math.pow(y-targetY2,2));
+      let distance3 = Math.sqrt(Math.pow(x-targetX3,2)+Math.pow(y-targetY3,2));
+      let distance4 = Math.sqrt(Math.pow(x-targetX4,2)+Math.pow(y-targetY4,2));
+      let distance5 = Math.sqrt(Math.pow(x-targetX5,2)+Math.pow(y-targetY5,2));
+
+      let str = document.querySelector("#s_btn");//スタートボタンを押したら
+      str.onclick = function(e){
+        targetX1 =random(50,590);//ターゲット位置を設定
+        targetY1 =random(50,430);
+        targetX2 =random(50,590);
+        targetY2 =random(50,430);
+        targetX3 =random(50,590);
+        targetY3 =random(50,430);
+        targetX4 =random(50,590);
+        targetY4 =random(50,430);
+        targetX5 =random(50,590);
+        targetY5 =random(50,430);
+        image(snow1,targetX1, targetY1, m1, m1);//画像配置
+        image(snow2,targetX2, targetY2, m2, m2);
+        image(snow3,targetX3, targetY3, m3, m3);
+        image(snow4,targetX4, targetY4, m4, m4);
+        image(snow5,targetX5, targetY5, m5, m5);
+        score = 0;//スコアをリセット
+      }
+      
+      if(distance1 < 30) targetX1 = random(50,590), targetY1 = random(50,430), score+=10, m1=random(20,70);//近くによるとランダムな位置に円を表示
+      if(distance2 < 30) targetX2 = random(50,590), targetY2 = random(50,430), score+=10, m2=random(20,70);
+      if(distance3 < 30) targetX3 = random(50,590), targetY3 = random(50,430), score+=10, m3=random(20,70);
+      if(distance4 < 30) targetX4 = random(50,590), targetY4 = random(50,430), score+=10, m4=random(20,70);
+      if(distance5 < 30) targetX5 = random(50,590), targetY5 = random(50,430), score+=10, m5=random(20,70);
+        
+      //画像を表示
+      image(snow1,targetX1, targetY1, m1, m1);
+      image(snow2,targetX2, targetY2, m2, m2);
+      image(snow3,targetX3, targetY3, m3, m3);
+      image(snow4,targetX4, targetY4, m4, m4);
+      image(snow5,targetX5, targetY5, m5, m5);
+      image(snowman,x,y,xs+score,ys+score);//キャラ画像表示
+      
+      
+      var txt = document.getElementById("txt");
+      txt.innerHTML = score +"点";//スコア表示
+      
+      if(score==100 && stop==0){//スコアが100点以上になると
+          
+          speak(text);//話す
+          var txt2 = document.getElementById("txt2");
+          txt2.innerHTML = "僕は立派な雪だるまになれたよ！";
+          stop+=1;
+      }
+        if(stop==1){
+            background(200,230,255);
+            a=width/2;
+            b=height/2;
+            image(snowman,a,b,xs+score,ys+score);
+           }
+     }
+      
+    let text = "僕は立派な雪だるまになれたよ！";
+      // 終了時の処理
+    msg.onend = function (event) {
+    console.log("End: ",text);
+    }
+      
+  </script>
+</body>
+</html>
